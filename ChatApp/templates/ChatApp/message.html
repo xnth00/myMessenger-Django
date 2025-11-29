@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages</title>
+    {% load static %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 50%, #fce7f3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Decorative background elements */
+        body::before,
+        body::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.2;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        body::before {
+            top: 80px;
+            left: 80px;
+            width: 288px;
+            height: 288px;
+            background: #c084fc;
+        }
+
+        body::after {
+            bottom: 80px;
+            right: 80px;
+            width: 384px;
+            height: 384px;
+            background: #818cf8;
+        }
+
+        .parent {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .chat-header {
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            padding: 24px 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: black;
+            opacity: 0.05;
+        }
+
+        .header-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .header-text h2 {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            margin: 0;
+        }
+
+        .header-text p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin: 2px 0 0 0;
+        }
+
+        .header-dots {
+            position: absolute;
+            top: 16px;
+            right: 32px;
+            display: flex;
+            gap: 8px;
+            opacity: 0.3;
+        }
+
+        .header-dots span {
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* Divider */
+        .divider {
+            height: 4px;
+            background: linear-gradient(90deg, #818cf8 0%, #a78bfa 50%, #f472b6 100%);
+            opacity: 0.3;
+        }
+
+        /* Chat body */
+        .child-2 {
+            background: linear-gradient(180deg, #f9fafb 0%, white 100%);
+            padding: 24px;
+        }
+
+        .chat-body-parent {
+            margin-bottom: 24px;
+        }
+
+        .message {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 8px;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar */
+        .message::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .message::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 10px;
+        }
+
+        .message::-webkit-scrollbar-thumb {
+            background: #a78bfa;
+            border-radius: 10px;
+        }
+
+        .message::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+
+        /* Message bubbles */
+        .receive,
+        .send {
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease-out;
+            display: flex;
+            gap: 12px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Received messages */
+        .receive {
+            align-items: flex-start;
+        }
+
+        .receive .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #818cf8 0%, #a855f7 100%);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .receive .avatar svg {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .receive .message-content {
+            display: flex;
+            flex-direction: column;
+            max-width: 448px;
+        }
+
+        .receive .bubble {
+            background: white;
+            border-radius: 16px;
+            border-top-left-radius: 4px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f3f4f6;
+        }
+
+        .receive .bubble p {
+            color: #1f2937;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .receive .sender-name {
+            margin-top: 4px;
+            padding: 0 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* Sent messages */
+        .send {
+            justify-content: flex-end;
+        }
+
+        .send .message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            max-width: 448px;
+        }
+
+        .send .bubble {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            border-radius: 16px;
+            border-top-right-radius: 4px;
+            padding: 12px 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .send .bubble p {
+            color: white;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .send .sender-name {
+            margin-top: 4px;
+            padding: 0 8px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .send .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .send .avatar svg {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Form */
+        .form form {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form form:focus-within {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: #c084fc;
+        }
+
+        .form textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 8px 12px;
+            color: #1f2937;
+            resize: none;
+            max-height: 128px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .form textarea::placeholder {
+            color: #9ca3af;
+        }
+
+        .form button {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form button:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: scale(1.05);
+        }
+
+        .form button:active {
+            transform: scale(0.95);
+        }
+
+        .form button svg {
+            width: 16px;
+            height: 16px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Footer note */
+        .footer-note {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .footer-note p {
+            font-size: 12px;
+            color: #9ca3af;
+            margin: 0;
+        }
+
+        /* Bottom accent */
+        .bottom-accent {
+            height: 8px;
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+
+        /* Mobile responsive */
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+
+            .parent {
+                border-radius: 0;
+                max-width: 100%;
+            }
+
+            .chat-header {
+                padding: 20px;
+            }
+
+            .child-2 {
+                padding: 16px;
+            }
+
+            .message {
+                max-height: 400px;
+            }
+
+            .receive .message-content,
+            .send .message-content {
+                max-width: 280px;
+            }
+
+            .form button {
+                padding: 12px 20px;
+            }
+
+            .form button span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="parent">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="header-content">
+                <div class="header-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h2>Chats</h2>
+                    <p>Stay connected with your team</p>
+                </div>
+            </div>
+            <div class="header-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Chat body -->
+        <div class="child-2">
+            <div class="chat-body-parent">
+                <div class="chat-body">
+                    <div class="message" id="chatContainer">
+                        <!-- received messages and displayed here -->
+                        {% for i in messages %}
+                            {% if i.sender != user %}
+                            <div class="receive">
+                                <div class="avatar">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </div>
+                                <div class="message-content">
+                                    <div class="bubble">
+                                        <p>{{i.message}}</p>
+                                    </div>
+                                    <div class="sender-name">{{i.sender}}</div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="send">
+                                <div class="message-content">
+                                    <div class="bubble">
+                                        <p>{{i.message}}</p>
+                                    </div>
+                                    <div class="sender-name">You</div>
+                                </div>
+                                <div class="avatar">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        <!-- end receive messages -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="form">
+                <form action="" id="message-form" method="POST">
+                    {% csrf_token %}
+                    <textarea 
+                        id="msg" 
+                        name="message" 
+                        placeholder="Type your message..." 
+                        required
+                        rows="1"
+                        oninput="this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 128) + 'px';"
+                    ></textarea>
+                    <button class="submit" type="submit">
+                        <span>Send</span>
+                        <svg viewBox="0 0 24 24">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer note -->
+            <div class="footer-note">
+                <p>WebSocket connected • Real-time messaging</p>
+            </div>
+        </div>
+
+        <!-- Bottom accent -->
+        <div class="bottom-accent"></div>
+    </div>
+
+    <script>
+        function scrollToBottom() {
+            var chatContainer = document.getElementById("chatContainer");
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Scroll to bottom on page load
+        window.addEventListener('load', scrollToBottom);
+
+        const websocketProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsEndpoint = `${websocketProtocol}://${window.location.host}/ws/notification/{{room_name}}/`;
+        const socket = new WebSocket(wsEndpoint);
+        socket.onopen = (event) => {
+            console.log("WebSocket connection opened!");
+        };
+
+        // Socket disconnect event
+        socket.onclose = (event) => {
+            console.log("WebSocket connection closed!");
+        };
+        // Form submit listener
+        
+        document.getElementById('message-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const message = document.getElementById('msg').value;
+            socket.send(
+                JSON.stringify({
+                    'message': message,
+                    'room_name': '{{room_name}}',
+                    'sender': '{{user}}',
+                })
+            );
+        });
+        
+        socket.addEventListener("message", (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Full Data: ", data);
+
+            const messageData = data.message;
+            console.log("Message Data: ", messageData);
+
+            var sender = messageData.sender;
+            var message = messageData.message;
+
+            // Empty the message input field after the message has been sent
+            if (sender == '{{user}}'){
+                document.getElementById('msg').value = '';
+            }
+
+            // Append the message to the chatbox
+            var messageDiv = document.querySelector('.message');
+            if (sender != '{{user}}') { // Assuming you have a variable `currentUser` to hold the current user's name
+                messageDiv.innerHTML += '<div class="receive"><p style="color: #000;">' + message + '<strong>-' + sender + '</strong></p></div>';
+            } 
+            else {
+                messageDiv.innerHTML += '<div class="send"><p style="color: #000;">' + message + '</p></div>';
+            }
+            scrollToBottom();
+        });
+
+        function scrollToBottom() {
+            var chatContainer = document.getElementById("chatContainer");
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // response from consumer on server
+        socket.addEventListener("message", (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Full Data: ", data);
+            const messageData = data.message;
+            console.log("Message Data: ", messageData);
+            var sender = messageData.sender;
+            var message = messageData.message;
+
+            // empty message input field after message has been sent
+            if (sender == '{{user}}') {
+                document.getElementById('msg').value = '';
+                document.getElementById('msg').style.height = 'auto';
+            }
+
+            // Here's where we append the message to the chatbox.
+            var messageDiv = document.querySelector('.message');
+            if (sender != '{{user}}') {
+                messageDiv.innerHTML += `
+                    <div class="receive">
+                        <div class="avatar">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="message-content">
+                            <div class="bubble">
+                                <p>${message}</p>
+                            </div>
+                            <div class="sender-name">${sender}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML += `
+                    <div class="send">
+                        <div class="message-content">
+                            <div class="bubble">
+                                <p>${message}</p>
+                            </div>
+                            <div class="sender-name">You</div>
+                        </div>
+                        <div class="avatar">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+            }
+            scrollToBottom();
+        });
+
+        socket.onopen = (event) => {
+            console.log("WebSocket connection opened!");
+        };
+
+        socket.onclose = (event) => {
+            console.log("WebSocket connection closed!");
+        };
+    </script>
+</body>
+</html>
