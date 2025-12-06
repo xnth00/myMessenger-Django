@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import os
 
 from pathlib import Path
 
@@ -25,7 +26,12 @@ SECRET_KEY = 'django-insecure-7dqo)+c)g0l&1ng38cjd33o&y4+(js2&+6&450bcpoxw3cpo%8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', '.onrender.com']
+
+REDIS_URL = os.environ.get(
+    "REDIS_URL",
+    "redis://default:Aa8NAAIncDJkZTk0Y2M2NjM4NjQ0MTdmYTMxZjMxZmVjZGY3YTZlYXAyNDQ4MTM@driving-colt-44813.upstash.io:6379",
+)
 
 
 # Application definition
@@ -71,8 +77,20 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'ChatProject.asgi.application'
 CHANNEL_LAYERS = {
-    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"},
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [redis-cli --tls -u redis://default:Aa8NAAIncDJkZTk0Y2M2NjM4NjQ0MTdmYTMxZjMxZmVjZGY3YTZlYXAyNDQ4MTM@driving-colt-44813.upstash.io:6379],
+        },
+    },
+
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://messenger4report.onrender.com',
+    'https://*.onrender.com',
+]
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
